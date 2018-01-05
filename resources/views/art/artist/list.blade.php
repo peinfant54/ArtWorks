@@ -20,7 +20,16 @@
                         @endforeach
                     </div>
 
+
+
                 </div>
+
+                <div style="padding-bottom: 20px; padding-left: 6px;">
+                    @if($xmod->pivot->wwrite>0)
+                        <div class="right"><button class="btn btn-primary right" data-title="New" data-toggle="modal" data-target="#new" name="new"><span class="glyphicon glyphicon-plus"></span>@lang('obra.BtnNew')</button></div>
+                    @endif
+                </div>
+
                 <div class="tz-gallery">
 
                     <div class="row">
@@ -59,6 +68,7 @@ Técnica: {{ $obra->tecnica }}">
                             @if($borrar_obra == 1)
                                 @include ('art.obra.delete' , ['obra' => $obra, 'next' => 1])
                             @endif
+
                         @endforeach
                    </div>
                     <div class="left">
@@ -70,6 +80,10 @@ Técnica: {{ $obra->tecnica }}">
                 </div>
 
             </div>
+            @include ('art.artist.newobra', ['artistaid' => $idartist])
+            <script type="text/javascript">
+
+                </script>
 
         </div>
 

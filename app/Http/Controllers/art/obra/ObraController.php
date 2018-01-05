@@ -594,6 +594,174 @@ class ObraController extends Controller
 
     }
 
+    public function ObraCreateArtist(CreateArtWorks $request)
+    {
+        try {
+            $pro = new SysObra();
+            $path1 = "";
+            $path2 = "";
+            $file_name = "";
+
+
+
+
+            if ($request->hasFile('foto1'))
+            {
+                if (Input::file('foto1')->isValid())
+                {
+
+                    $file_name = Input::get('n_inv') . "." . $request->file('foto1')->getClientOriginalExtension();
+                    $pathO = "public/Arts_Original/";
+                    $pathS = public_path('storage/Arts_Small/' . $file_name);
+                    $pathC = public_path('storage/Arts_Square/' . $file_name);
+                    // dd($file_name);
+                    $request->file('foto1')->storeAs($pathO, $file_name); //Save Original Photo
+
+                    //dd(Image::make($request->file('foto1_edit')));
+                    //$im  = Image::make($request->file('foto1_edit'));
+
+                    $img = Image::make($request->file('foto1'));
+
+                    // dd($img2);
+
+                    if ($img->width() > $img->height())
+                    {
+                        /**
+                        Primera Imagen: Reduccion de tamaño
+                         */
+
+                        $img->resize(800, null, function ($constraint) {
+                            $constraint->aspectRatio();
+                        });  //Resize and maintain aspect ratio
+
+                        $img->save($pathS, 60); //Save the New Small Photo
+
+                        /*
+                         * Segunda Imagen: Primero se reduce de tamaño y luego se corta desde el centro un cuadrado.
+                         * */
+
+                        $img2 = Image::make($request->file('foto1'));;
+                        $img2->resize(800, null, function ($constraint) {
+                            $constraint->aspectRatio();
+                        }); //Resize and maintain aspect ratio
+
+                        $width  = $img2->width();
+                        $height = $img2->height();
+                        if($height < 400)
+                        {
+                            $img2->crop(400, 400); //Crop a square from the center of image
+                        }
+                        else{
+                            $img2->crop($height, $height); //Crop a square from the center of image
+                        }
+                        $img2->save($pathC, 60); //Save the New Square Photo
+
+                    }
+                    else
+                    {
+
+                        /**
+                        Primera Imagen: Reduccion de tamaño
+                         */
+
+                        $img->resize(null, 800, function ($constraint) {
+                            $constraint->aspectRatio();
+                        });  //Resize and maintain aspect ratio
+
+                        $img->save($pathS, 60); //Save the New Small Photo
+
+                        /*
+                         * Segunda Imagen: Primero se reduce de tamaño y luego se corta desde el centro un cuadrado.
+                         * */
+
+                        $img2 = Image::make($request->file('foto1'));;
+                        $img2->resize(null, 800, function ($constraint) {
+                            $constraint->aspectRatio();
+                        }); //Resize and maintain aspect ratio
+
+                        $width  = $img2->width();
+                        //$height = $img2->height();
+
+                        if($width < 400)
+                        {
+                            $img2->crop(400, 400); //Crop a square from the center of image
+                        }
+                        else{
+                            $img2->crop($width, $width); //Crop a square from the center of image
+                        }
+
+
+                        $img2->save($pathC, 60); //Save the New Square Photo
+                    }
+                    LogSystem::writeSystemLog("The Artwork with N_Inv = ". Input::get('n_inv') ." has upload a picture: " .$file_name ,"Art.ArtWorks",Auth::id());
+
+                    // $img->save($pathS, 60); //Save the New Photo
+                    // $img2->save($pathC, 60); //Save the New Photo
+
+                    $pro->file1         = $file_name;
+                    $pro->file2         = $file_name;
+
+                    //dd($img2);
+
+                }
+            }
+
+
+
+            $pro->n_inv = Input::get('n_inv');
+            $pro->id_artista = Input::get('id_artista');
+            $pro->titulo = Input::get('titulo');
+            $pro->tecnica = Input::get('tecnica');
+            $pro->dimension = Input::get('dimension');
+            $pro->ano = Input::get('ano');
+            $pro->edicion = Input::get('edicion');
+            $pro->procedencia = Input::get('procedencia');
+            $pro->catalogo = Input::get('catalogo');
+            $pro->certificacion = Input::get('certificacion');
+            $pro->valoracion = Input::get('valoracion');
+            $pro->id_ubica = Input::get('id_ubica');
+            $pro->file1 = $file_name;
+            $pro->file2 = $file_name;
+            $pro->obs = Input::get('obs');
+            $pro->save();
+            Session::flash('dbCreate', 'Artwork');
+
+            if ($request->hasFile('pdf'))
+            {
+                //dd($request->pdf);
+
+                foreach ($request->pdf as $pdf)
+                {
+                    $file_name = $pdf->getClientOriginalName();
+                    //dd($file_name);
+                    $pathO = "public/pdfs/";
+                    //dd($pathC);
+                    $filename = $pdf->storeAs($pathO, $file_name);
+                    $tmp = new SysObraFile();
+                    $tmp->id_obra = $pro->id;
+                    $tmp->name = $file_name;
+
+                    //dd($tmp);
+                    $tmp->save();
+
+                    //dd($tmp);
+                }
+
+            }
+
+            LogSystem::writeSystemLog("The Artwork with ID = ". $pro->id ." has been created with picture: " . $pro->file1,"Art.ArtWorks",Auth::id());
+            return redirect("art/obra/list/".$pro->id_artista);
+        }
+        catch(\Exception $e)
+        {
+            LogSystem::writeLog("ExcepcionM : " . $e->getMessage() . " ", Auth::id());
+            LogSystem::writeLog("ExcepcionF : " . $e->getFile() . " ", Auth::id());
+            LogSystem::writeLog("ExcepcionL : " . $e->getLine() . " ", Auth::id());
+            LogSystem::writeLog("ExcepcionT : " . $e->getTraceAsString() . " ", Auth::id());
+        }
+
+    }
+
     public function ObraPdfIndex($id)
     {
         try{
@@ -785,11 +953,12 @@ class ObraController extends Controller
                             ->with('modulos', $modules)
                             ->with('allmod', $allmod)
                             ->with('obras', $pro)
+                            ->with('xmod', $a)
                             ->with('idartist',$id)
                             ->with('editar_obra', $permission_edit_art)
                             ->with('location', $location)
                             ->with('artists_name', $artists_name)
-                        ->with('borrar_obra', $permission_delete_art)
+                            ->with('borrar_obra', $permission_delete_art)
                             ->with('artist', $artists);
 
                 }
