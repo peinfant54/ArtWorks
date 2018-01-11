@@ -30,7 +30,7 @@ class EditArtworks extends FormRequest
             'dimension_edit'     => 'nullable|string|max:200',
             'ano_edit'           => 'nullable|string|max:20',
             'edicion_edit'       => 'nullable|string|max:200',
-            'procedencia_edit'   => 'nullable|string|max:100',
+            'procedencia_edit'   => 'nullable|string|max:200',
             'catalogo_edit'      => 'nullable|string|max:200',
             'certificacion_edit' => 'nullable|string|max:100',
             'valoracion_edit'    => 'nullable|string|max:100',
